@@ -10,6 +10,12 @@ plugins {
 }
 
 val golangSource = file("src/main/golang/native")
+val goExecutable = listOfNotNull(
+    System.getenv("GO_EXECUTABLE"),
+    "/opt/homebrew/bin/go",
+    "/usr/local/go/bin/go",
+    "/usr/bin/go",
+).firstOrNull { file(it).canExecute() } ?: "go"
 
 golang {
     sourceSets {
@@ -58,6 +64,12 @@ dependencies {
 
 afterEvaluate {
     tasks.withType(GolangBuildTask::class.java).forEach {
+        it.executable = goExecutable
+        it.environment("PATH", listOf(
+            "/opt/homebrew/bin",
+            "/usr/local/go/bin",
+            System.getenv("PATH") ?: "",
+        ).joinToString(":"))
         it.inputs.dir(golangSource)
     }
 }
